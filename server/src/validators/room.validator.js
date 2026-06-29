@@ -16,3 +16,21 @@ export const createRoomSchema = z.object({
     .max(100, "Room title must not exceed 100 characters.")
     .optional(),
 });
+
+export const joinRoomSchema = z.object({
+  name: z
+    .string({
+      required_error: "Display name is required.",
+    })
+    .trim()
+    .min(2, "Display name must be at least 2 characters.")
+    .max(30, "Display name must not exceed 30 characters."),
+
+  roomCode: z
+    .string({
+      required_error: "Room code is required.",
+    })
+    .trim()
+    .length(6, "Invalid room code.")
+    .transform((code) => code.toUpperCase()),
+});
