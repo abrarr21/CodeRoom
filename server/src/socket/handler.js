@@ -1,8 +1,5 @@
 import { Server } from "socket.io";
 
-
-
-
 export function attachSocketHandlers(httpServer) {
   const io = new Server(httpServer);
 
