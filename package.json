@@ -1,0 +1,23 @@
+{
+  "name": "coderoom",
+  "private": true,
+  "scripts": {
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16",
+    "prettier": "^3"
+  },
+  "lint-staged": {
+    "client/**/*.{js,jsx}": [
+      "npm --prefix client exec eslint --fix"
+    ],
+    "server/**/*.js": [
+      "npm --prefix server exec eslint --fix"
+    ],
+    "*.{json,md,css}": [
+      "prettier --write"
+    ]
+  }
+}
