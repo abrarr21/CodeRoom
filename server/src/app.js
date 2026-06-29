@@ -1,7 +1,7 @@
 import cors from "cors";
 import express from "express";
-import {attachSocketHandlers} from "./socket/handler.js";
 import env from "./config/env.js";
+import roomRoutes from "./routes/room.routes.js";
 
 export function createApp() {
   const app = express();
@@ -9,6 +9,7 @@ export function createApp() {
   app.use(cors({ origin: env.clientUrl }));
   app.use(express.json());
 
+  app.use("/api/rooms", roomRoutes);
 
   app.use((err, _req, res, _next) => {
     console.error(err);
