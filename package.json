@@ -7,14 +7,17 @@
   "devDependencies": {
     "husky": "^9.1.7",
     "lint-staged": "^16",
-    "prettier": "^3"
+    "prettier": "^3",
+    "prettier-plugin-tailwindcss": "^0.8.0"
   },
   "lint-staged": {
     "client/**/*.{js,jsx}": [
-      "npm --prefix client exec eslint --fix"
+      "npm --prefix client exec eslint --fix",
+      "prettier --write"
     ],
     "server/**/*.js": [
-      "npm --prefix server exec eslint --fix"
+      "npm --prefix server exec eslint --fix",
+      "prettier --write"
     ],
     "*.{json,md,css}": [
       "prettier --write"
