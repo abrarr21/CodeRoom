@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const participantSchema = new mongoose.Schema(
   {
@@ -18,13 +18,13 @@ const participantSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["host", "participant"],
-      default: "participant",
+      enum: ['host', 'participant'],
+      default: 'participant',
     },
   },
   {
     _id: false,
-  },
+  }
 );
 
 const HistorySchema = new mongoose.Schema(
@@ -34,7 +34,7 @@ const HistorySchema = new mongoose.Schema(
     op: {
       type: {
         type: String,
-        enum: ["insert", "delete"],
+        enum: ['insert', 'delete'],
         required: true,
       },
       index: { type: Number, required: true },
@@ -43,7 +43,7 @@ const HistorySchema = new mongoose.Schema(
     },
     createdAt: { type: Date, default: Date.now },
   },
-  { _id: false },
+  { _id: false }
 );
 
 const roomSchema = new mongoose.Schema(
@@ -59,7 +59,7 @@ const roomSchema = new mongoose.Schema(
 
     title: {
       type: String,
-      default: "Untitled Document",
+      default: 'Untitled Document',
       trim: true,
       maxlength: 100,
     },
@@ -81,8 +81,24 @@ const roomSchema = new mongoose.Schema(
     },
 
     document: {
-      content: { type: String, default: "" },
-      version: { type: Number, default: 0 },
+      content: {
+        type: String,
+        default: '',
+      },
+
+      version: {
+        type: Number,
+        default: 0,
+      },
+
+      lastSequece: {
+        type: Number,
+        default: 0,
+      },
+      updatedAt: {
+        type: Date,
+        default: Date.now,
+      },
     },
 
     history: {
@@ -93,7 +109,7 @@ const roomSchema = new mongoose.Schema(
   {
     timestamps: true,
     versionKey: false,
-  },
+  }
 );
 
-export const Room = mongoose.model("Room", roomSchema);
+export const Room = mongoose.model('Room', roomSchema);
