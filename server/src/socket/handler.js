@@ -3,6 +3,7 @@ import {
   closeRoomService,
   joinRoomService,
   markParticipantOfflineService,
+  reconnectRoomService
 } from '../services/room.service.js';
 import { registerDocumentEvents, getJoinPayload } from './document.events.js';
 
@@ -28,9 +29,8 @@ export function attachSocketHandlers(httpServer) {
   io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
 
-    // 1. Domain A: Room Joining & Handshake
     socket.on('room:join', async (payload, callback) => {
-      const { roomCode, displayName, sessionId } = payload;
+      const { roomCode, displayName } = payload;
 
       const {
         room,
@@ -40,7 +40,6 @@ export function attachSocketHandlers(httpServer) {
       } = await joinRoomService({
         roomCode,
         displayName,
-        sessionId,
         socketId: socket.id,
       });
 
@@ -83,15 +82,58 @@ export function attachSocketHandlers(httpServer) {
       });
     });
 
-    // 2. Domain B: Register collaborative document handlers
+    socket.on("room:reconnect", async (payload, callback) => {
+      const { roomCode, participantId, sessionId } = payload;
+    
+      const { room, participant, error } = await reconnectRoomService({
+        roomCode,
+        participantId,
+        sessionId,
+        socketId: socket.id,
+      });
+    
+      if (error) {
+        if (callback) callback({ success: false, error });
+        return;
+      }
+    
+      socket.data.roomCode = room.roomCode;
+      socket.data.clientId = participant.participantId;
+    
+      socket.join(room.roomCode);
+    
+      const initialPayload = await getJoinPayload(room.roomCode);
+    
+      if (callback) {
+        callback({
+          success: true,
+          participantId: participant.participantId,
+          sessionId: participant.sessionId,
+          snapshot: {
+            roomCode: room.roomCode,
+            title: room.title,
+            document: {
+              content: initialPayload.content,
+              lastSequence: initialPayload.lastSequence,
+            },
+            locks: initialPayload.locks,
+            participants: serializeParticipants(room.participants),
+            isHost: room.hostParticipantId === participant.participantId,
+          },
+        });
+      }
+    
+      io.to(room.roomCode).emit("presence:participants", {
+        participants: serializeParticipants(room.participants),
+      });
+    });
+
     registerDocumentEvents(io, socket);
 
-    // 3. Presence indicator: typing
     socket.on('presence:typing', ({ roomCode, sessionId, isTyping }) => {
       socket.to(roomCode).emit('presence:typing', { sessionId, isTyping });
     });
 
-    // 4. Domain A: Close room
     socket.on('room:close', async ({ roomCode, sessionId }) => {
       const { room, error } = await closeRoomService({ roomCode, sessionId });
       if (error) {
@@ -101,7 +143,6 @@ export function attachSocketHandlers(httpServer) {
       io.to(room.roomCode).emit('room:closed', { roomCode: room.roomCode });
     });
 
-    // 5. Cleanup on disconnection
     socket.on('disconnect', async () => {
       console.log('A user disconnected:', socket.id);
       const { roomCode } = socket.data;

@@ -2,11 +2,11 @@ import { randomUUID } from 'node:crypto';
 import { Room } from '../models/room.model.js';
 import { generateRoomCode } from '../utils/generateRoomCode.js';
 
-export const createRoomService = async ({ name, title }) => {
+export const createRoomService = async ({name,title}) => {
   let roomCode;
 
   do {
-    roomCode = await generateRoomCode();
+    roomCode = generateRoomCode();
   } while (await Room.exists({ roomCode }));
 
   const participantId = randomUUID();
@@ -21,8 +21,9 @@ export const createRoomService = async ({ name, title }) => {
       {
         participantId,
         sessionId,
+        socketId: null,
         name,
-        role: 'host',
+        role: "host",
         online: true,
         lastSeenAt: new Date(),
       },
@@ -36,52 +37,55 @@ export const createRoomService = async ({ name, title }) => {
   };
 };
 
-export const joinRoomService = async ({ displayName, roomCode, sessionId, socketId }) => {
-  const room = await Room.findOne({ roomCode: roomCode?.toUpperCase() });
+export const joinRoomService = async ({
+  displayName,
+  roomCode,
+  socketId,
+}) => {
+  const room = await Room.findOne({
+    roomCode: roomCode?.toUpperCase(),
+  });
 
   if (!room) {
-    return { error: 'Room not found.' };
+    return { error: "Room not found." };
   }
 
   if (room.isClosed) {
-    return { error: 'Room has been closed.' };
+    return { error: "Room has been closed." };
   }
 
-  // Handle reconnecting user
-  let participant = room.participants.find((p) => p.sessionId === sessionId);
+  // Display name must be unique among online participants
+  const nameConflicted = room.participants.some(
+    (p) =>
+      p.name.toLowerCase() === displayName.toLowerCase() &&
+      p.online
+  );
 
-  if (participant) {
-    participant.online = true;
-    participant.socketId = socketId;
-    participant.lastSeenAt = new Date();
-  } else {
-    // Check if displayName name conflicts with someone else
-    const nameConflicted = room.participants.some(
-      (p) => p.name.toLowerCase() === displayName.toLowerCase() && p.online
-    );
-    if (nameConflicted) {
-      return { error: 'Display name already exists and is active.' };
-    }
-
-    const participantId = randomUUID();
-    participant = {
-      participantId,
-      sessionId: sessionId || randomUUID(),
-      socketId,
-      name: displayName,
-      role: 'participant',
-      online: true,
-      lastSeenAt: new Date(),
+  if (nameConflicted) {
+    return {
+      error: "Display name already exists and is active.",
     };
-    room.participants.push(participant);
   }
+
+  const participantId = randomUUID();
+  const sessionId = randomUUID();
+
+  room.participants.push({
+    participantId,
+    sessionId,
+    socketId,
+    name: displayName,
+    role: "participant",
+    online: true,
+    lastSeenAt: new Date(),
+  });
 
   await room.save();
 
   return {
     room,
-    participantId: participant.participantId,
-    sessionId: participant.sessionId,
+    participantId,
+    sessionId,
   };
 };
 
@@ -118,4 +122,42 @@ export const markParticipantOfflineService = async ({ roomCode, socketId }) => {
   }
 
   return room;
+};
+
+export const reconnectRoomService = async ({
+  roomCode,
+  participantId,
+  sessionId,
+  socketId,
+}) => {
+  const room = await findRoomByCode(roomCode);
+
+  if (!room) {
+    return { error: "Room not found." };
+  }
+
+  if (room.isClosed) {
+    return { error: "Room has been closed." };
+  }
+
+  const participant = room.participants.find(
+    (p) =>
+      p.participantId === participantId &&
+      p.sessionId === sessionId
+  );
+
+  if (!participant) {
+    return { error: "Session expired. Please join again." };
+  }
+
+  participant.socketId = socketId;
+  participant.online = true;
+  participant.lastSeenAt = new Date();
+
+  await room.save();
+
+  return {
+    room,
+    participant,
+  };
 };
