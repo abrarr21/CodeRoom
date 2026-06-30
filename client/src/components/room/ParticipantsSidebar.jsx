@@ -16,12 +16,22 @@ const avatarPalette = [
 
 const getAvatarColor = (index) => avatarPalette[index % avatarPalette.length];
 
-const ParticipantItem = ({ participant, index, isCurrentUser, isTyping }) => {
+const ParticipantItem = ({
+  participant,
+  index,
+  isCurrentUser,
+  isTyping,
+  editingLine,
+  canRemoveParticipant,
+  onRemoveParticipant,
+}) => {
   const subtitle = isTyping
     ? "Typing..."
-    : participant.online
-      ? "Online"
-      : "Offline";
+    : Number.isInteger(editingLine)
+      ? `Editing line ${editingLine + 1}`
+      : participant.online
+        ? "Online"
+        : "Offline";
 
   return (
     <li className="rounded-lg border border-slate-800/80 bg-slate-900/70 px-3 py-2.5">
@@ -45,14 +55,34 @@ const ParticipantItem = ({ participant, index, isCurrentUser, isTyping }) => {
             <span>{subtitle}</span>
           </div>
         </div>
+
+        {canRemoveParticipant && (
+          <button
+            type="button"
+            onClick={() => onRemoveParticipant(participant.participantId)}
+            className="ml-2 my-auto transition text-red-700 hover:text-red-500 cursor-pointer"
+            title="Remove participant"
+            aria-label={`Remove ${participant.name}`}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/></svg>
+          </button>
+        )}
       </div>
     </li>
   );
 };
 
-const ParticipantsSidebar = ({ participants, typingBySessionId, currentSessionId, onLeaveRoom }) => {
+const ParticipantsSidebar = ({
+  participants,
+  typingBySessionId,
+  lineByParticipantId,
+  currentSessionId,
+  isCurrentUserHost,
+  onRemoveParticipant,
+  onLeaveRoom,
+}) => {
   return (
-    <aside className="flex h-full min-h-[100vh] w-full flex-col border-b border-slate-800 bg-slate-950/80 md:w-1/4 md:border-b-0 md:border-r">
+    <aside className="flex h-full min-h-screen w-full flex-col border-b border-slate-800 bg-slate-950/80 md:w-1/4 md:border-b-0 md:border-r">
       <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
         <h2 className="text-xs font-semibold tracking-[0.18em] text-slate-300">PARTICIPANTS</h2>
         <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-xs font-bold text-blue-300">
@@ -68,6 +98,13 @@ const ParticipantsSidebar = ({ participants, typingBySessionId, currentSessionId
             index={index}
             isCurrentUser={participant.sessionId === currentSessionId}
             isTyping={Boolean(typingBySessionId[participant.sessionId])}
+            editingLine={lineByParticipantId[participant.participantId]}
+            canRemoveParticipant={
+              isCurrentUserHost &&
+              !participant.isHost &&
+              participant.sessionId !== currentSessionId
+            }
+            onRemoveParticipant={onRemoveParticipant}
           />
         ))}
       </ul>

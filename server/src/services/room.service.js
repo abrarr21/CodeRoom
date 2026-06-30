@@ -115,13 +115,37 @@ export const joinRoomService = async ({
   };
 };
 
-export const reconnectRoomService = async ({ roomCode, sessionId, socketId }) => {
-  return joinRoomService({
-    roomCode,
-    displayName: "",
-    sessionId,
-    socketId,
-  });
+export const reconnectRoomService = async ({ roomCode, participantId, sessionId, socketId }) => {
+  const room = await findRoomByCode(roomCode);
+
+  if (!room) {
+    return { error: "Room not found." };
+  }
+
+  if (room.isClosed) {
+    return { error: "Room has been closed." };
+  }
+
+  const participant = room.participants.find(
+    (p) =>
+      (sessionId && p.sessionId === sessionId) ||
+      (participantId && p.participantId === participantId),
+  );
+
+  if (!participant) {
+    return { error: "Participant not found for reconnect." };
+  }
+
+  participant.online = true;
+  participant.socketId = socketId;
+  participant.lastSeenAt = new Date();
+
+  await room.save();
+
+  return {
+    room,
+    participant,
+  };
 };
 
 export async function findRoomByCode(code) {
