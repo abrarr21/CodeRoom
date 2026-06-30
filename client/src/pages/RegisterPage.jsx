@@ -1,44 +1,43 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { createRoom } from "../api/http";
-
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { createRoom } from '../api/http';
 
 const RegisterPage = () => {
+  const navigate = useNavigate();
 
+  const [Name, setName] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [inputRoomCode, setInputRoomCode] = useState('');
 
-    const navigate =useNavigate();
-
-    const [Name, setName] = useState('')
-    const [error, setError] = useState('')
-    const [loading, setLoading] = useState(false)
-
-    const withIdentity = () => {
+  const withIdentity = () => {
     const trimmed = Name.trim();
     if (!trimmed) {
-      throw new Error("Please enter your  name");
+      throw new Error('Please enter your  name');
     }
     setName(trimmed);
     return {
       Name: trimmed,
     };
+  };
+  const handleCreateRoom = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      const identity = withIdentity();
+      const data = await createRoom({ name: identity.Name });
+
+      console.log('Room created:', data.data.room.roomCode);
+
+      navigate(`/room-code/${data.data.room.roomCode}`, {
+        state: { roomCode: data.data.room.roomCode, participantId: data.data.participantId },
+      });
+    } catch (error) {
+      setError(error.message || 'An error occurred while creating the room.');
+    } finally {
+      setLoading(false);
     }
-    const handleCreateRoom = async () => {
-        setError('')
-        setLoading(true)
-        try {
-            const identity = withIdentity();
-            const data = await createRoom({ name: identity.Name });
-
-            console.log("Room created:", data.data.room.roomCode);
-
-            navigate(`/room-code/${data.data.room.roomCode}`, { state: { roomCode: data.data.room.roomCode, participantId: data.data.participantId } });    
-        } catch (error) {
-            setError( error.message || "An error occurred while creating the room.");
-        } finally {
-            setLoading(false);
-        }
-    }
-
+  };
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-4 py-10 text-slate-100">
@@ -48,13 +47,20 @@ const RegisterPage = () => {
 
       <section className="relative z-10 w-full max-w-lg rounded-xl border border-slate-700/60 bg-slate-900/85 p-7 shadow-[0_0_0_1px_rgba(30,41,59,0.5),0_22px_80px_rgba(2,6,23,0.85)] backdrop-blur-lg sm:p-8">
         <header className="text-center">
-          <h1 className="text-4xl font-black tracking-tight text-blue-300 sm:text-[2.7rem]">CodeRoom</h1>
-          <p className="mt-2 text-sm font-medium tracking-wider text-slate-300">Code together, live.</p>
+          <h1 className="text-4xl font-black tracking-tight text-blue-300 sm:text-[2.7rem]">
+            CodeRoom
+          </h1>
+          <p className="mt-2 text-sm font-medium tracking-wider text-slate-300">
+            Code together, live.
+          </p>
         </header>
 
         <div className="mt-8 space-y-6">
           <div className="space-y-2">
-            <label htmlFor="displayName" className="text-[0.7rem] font-semibold uppercase tracking-[0.18em] text-slate-400">
+            <label
+              htmlFor="displayName"
+              className="text-[0.7rem] font-semibold tracking-[0.18em] text-slate-400 uppercase"
+            >
               Display Name / Handle
             </label>
             <div className="flex items-center gap-2 rounded-md border border-slate-700 bg-slate-950/80 px-3">
@@ -120,12 +126,23 @@ const RegisterPage = () => {
               </svg>
               <input
                 type="text"
+                value={inputRoomCode}
+                onChange={(e) => setInputRoomCode(e.target.value.toUpperCase())}
                 placeholder="Enter Room Code"
                 className="h-11 w-full bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none"
               />
             </div>
             <button
               type="button"
+              onClick={async () => {
+                setError('');
+                try {
+                  const identity = withIdentity();
+                  navigate(`/room/${inputRoomCode}`, { state: { displayName: identity.Name } });
+                } catch (error) {
+                  setError(error.message);
+                }
+              }}
               className="h-11 min-w-16 rounded-md bg-slate-700 px-4 text-sm font-semibold text-slate-100 transition hover:bg-slate-600"
             >
               Join
@@ -152,7 +169,7 @@ const RegisterPage = () => {
         </footer>
       </section>
     </main>
-  )
-}
+  );
+};
 
-export default RegisterPage
+export default RegisterPage;

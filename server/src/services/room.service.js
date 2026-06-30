@@ -1,26 +1,30 @@
-import { randomUUID } from "node:crypto";
-import { Room } from "../models/room.model.js";
-import { generateRoomCode } from "../utils/generateRoomCode.js";
+import { randomUUID } from 'node:crypto';
+import { Room } from '../models/room.model.js';
+import { generateRoomCode } from '../utils/generateRoomCode.js';
 
 export const createRoomService = async ({ name, title }) => {
   let roomCode;
 
-  // Generate a unique room code
   do {
     roomCode = generateRoomCode();
   } while (await Room.exists({ roomCode }));
 
   const participantId = randomUUID();
+  const sessionId = randomUUID();
 
   const room = await Room.create({
     roomCode,
-    title: title?.trim(),
+    title: title?.trim() || 'Untitled Document',
     hostParticipantId: participantId,
+    hostSessionId: sessionId,
     participants: [
       {
         participantId,
+        sessionId,
         name,
-        role: "host",
+        role: 'host',
+        online: true,
+        lastSeenAt: new Date(),
       },
     ],
   });
@@ -28,45 +32,58 @@ export const createRoomService = async ({ name, title }) => {
   return {
     room,
     participantId,
+    sessionId,
   };
 };
 
-export const joinRoomService = async ({ name, roomCode }) => {
-  const normalizedRoomCode = roomCode?.toUpperCase();
-  const room = await Room.findOne({ roomCode: normalizedRoomCode });
+export const joinRoomService = async ({ displayName, roomCode, sessionId, socketId }) => {
+  const room = await Room.findOne({ roomCode: roomCode?.toUpperCase() });
 
   if (!room) {
-    throw new Error("Room not found.");
+    return { error: 'Room not found.' };
   }
 
   if (room.isClosed) {
-    throw new Error("Room has been closed.");
+    return { error: 'Room has been closed.' };
   }
 
-  const existingParticipant = room.participants.find(
-    (participant) => participant.name.toLowerCase() === name.toLowerCase(),
-  );
+  // Handle reconnecting user
+  let participant = room.participants.find((p) => p.sessionId === sessionId);
 
-  if (existingParticipant) {
-    throw new Error("Display name already exists.");
+  if (participant) {
+    participant.online = true;
+    participant.socketId = socketId;
+    participant.lastSeenAt = new Date();
+  } else {
+    // Check if displayName name conflicts with someone else
+    const nameConflicted = room.participants.some(
+      (p) => p.name.toLowerCase() === displayName.toLowerCase() && p.online
+    );
+    if (nameConflicted) {
+      return { error: 'Display name already exists and is active.' };
+    }
+
+    const participantId = randomUUID();
+    participant = {
+      participantId,
+      sessionId: sessionId || randomUUID(),
+      socketId,
+      name: displayName,
+      role: 'participant',
+      online: true,
+      lastSeenAt: new Date(),
+    };
+    room.participants.push(participant);
   }
-
-  const participantId = randomUUID();
-
-  room.participants.push({
-    participantId,
-    name,
-    role: "participant",
-  });
 
   await room.save();
 
   return {
     room,
-    participantId,
+    participantId: participant.participantId,
+    sessionId: participant.sessionId,
   };
 };
-
 
 export async function findRoomByCode(code) {
   return Room.findOne({ roomCode: code?.toUpperCase() });
@@ -75,38 +92,30 @@ export async function findRoomByCode(code) {
 export const closeRoomService = async ({ roomCode, sessionId }) => {
   const room = await findRoomByCode(roomCode);
   if (!room) {
-    throw new Error("Room not found.");
+    return { error: 'Room not found.' };
   }
 
-  if (room.hostParticipantId !== sessionId) {
-    throw new Error("Only the host can close the room.");
+  if (room.hostSessionId !== sessionId) {
+    return { error: 'Only the host can close the room.' };
   }
 
   room.isClosed = true;
   await room.save();
 
-  return room;
-}
-
+  return { room };
+};
 
 export const markParticipantOfflineService = async ({ roomCode, socketId }) => {
   const room = await findRoomByCode(roomCode);
-  if (!room) {
-    throw new Error("Room not found.");
-  }
+  if (!room) return null;
 
   const participant = room.participants.find((p) => p.socketId === socketId);
-  if (!participant) {
-    return room;
+  if (participant) {
+    participant.online = false;
+    participant.socketId = null;
+    participant.lastSeenAt = new Date();
+    await room.save();
   }
-
-  participant.online = false;
-  participant.socketId = null;
-  participant.lastSeenAt = new Date();
-
-  await room.save();
 
   return room;
 };
-
-
