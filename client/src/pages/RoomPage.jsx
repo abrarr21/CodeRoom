@@ -65,6 +65,16 @@ const RoomPage = () => {
   const sequenceRef = useRef(0);
 
   useEffect(() => {
+    if (!error) return;
+
+    const timeoutId = setTimeout(() => {
+      setError("");
+    }, 3000);
+
+    return () => clearTimeout(timeoutId);
+  }, [error]);
+
+  useEffect(() => {
     if (!roomCode) {
       navigate("/");
       return;
