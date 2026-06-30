@@ -2,6 +2,7 @@ import {
   closeRoomService,
   createRoomService,
   joinRoomService,
+  renameRoomService,
 } from "../services/room.service.js";
 
 export const createRoomController = async (req, res, next) => {
@@ -68,6 +69,36 @@ export const closeRoomController = async (req, res, next) => {
       data: {
         roomCode: room.roomCode,
         isClosed: room.isClosed,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const renameRoomController = async (req, res, next) => {
+  try {
+    const { sessionId, title } = req.body;
+
+    const { room, error } = await renameRoomService({
+      roomCode: req.params.code,
+      sessionId,
+      title,
+    });
+
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: error,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Room renamed successfully.",
+      data: {
+        roomCode: room.roomCode,
+        title: room.title,
       },
     });
   } catch (error) {

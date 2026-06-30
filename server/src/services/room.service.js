@@ -119,3 +119,29 @@ export const markParticipantOfflineService = async ({ roomCode, socketId }) => {
 
   return room;
 };
+
+export const renameRoomService = async ({
+  roomCode,
+  sessionId,
+  title,
+}) => {
+  const room = await findRoomByCode(roomCode);
+
+  if (!room) {
+    return { error: "Room not found." };
+  }
+
+  if (room.isClosed) {
+    return { error: "Room has been closed." };
+  }
+
+  if (room.hostSessionId !== sessionId) {
+    return { error: "Only the host can rename the room." };
+  }
+
+  room.title = title.trim();
+
+  await room.save();
+
+  return { room };
+};

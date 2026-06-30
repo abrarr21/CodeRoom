@@ -3,6 +3,7 @@ import {
   closeRoomService,
   joinRoomService,
   markParticipantOfflineService,
+  renameRoomService,
 } from '../services/room.service.js';
 import { registerDocumentEvents, getJoinPayload } from './document.events.js';
 
@@ -89,6 +90,26 @@ export function attachSocketHandlers(httpServer) {
     // 3. Presence indicator: typing
     socket.on('presence:typing', ({ roomCode, sessionId, isTyping }) => {
       socket.to(roomCode).emit('presence:typing', { sessionId, isTyping });
+    });
+
+    socket.on("room:rename", async ({ roomCode, sessionId, title }) => {
+      const { room, error } = await renameRoomService({
+        roomCode,
+        sessionId,
+        title,
+      });
+    
+      if (error) {
+        socket.emit("room:error", {
+          message: error,
+        });
+        return;
+      }
+    
+      io.to(room.roomCode).emit("room:renamed", {
+        roomCode: room.roomCode,
+        title: room.title,
+      });
     });
 
     // 4. Domain A: Close room
