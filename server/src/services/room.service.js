@@ -6,7 +6,7 @@ export const createRoomService = async ({ name, title }) => {
   let roomCode;
 
   do {
-    roomCode = generateRoomCode();
+    roomCode = await generateRoomCode();
   } while (await Room.exists({ roomCode }));
 
   const participantId = randomUUID();
