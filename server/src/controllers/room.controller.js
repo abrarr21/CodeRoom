@@ -1,4 +1,5 @@
 import {
+  closeRoomService,
   createRoomService,
   joinRoomService,
 } from "../services/room.service.js";
@@ -41,6 +42,32 @@ export const joinRoomController = async (req, res, next) => {
         roomCode: room.roomCode,
         title: room.title,
         participantId,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+export const closeRoomController = async (req, res, next) => {
+  try {
+    const { sessionId } = req.body;
+    if (!sessionId) {
+      return res.status(400).json({ error: "sessionId is required" });
+    }
+
+    const room = await closeRoomService({
+      roomCode: req.params.code,
+      sessionId,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Room closed successfully.",
+      data: {
+        roomCode: room.roomCode,
+        isClosed: room.isClosed,
       },
     });
   } catch (error) {

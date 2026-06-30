@@ -1,6 +1,45 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { createRoom } from "../api/http";
 
 
 const RegisterPage = () => {
+
+
+    const navigate =useNavigate();
+
+    const [Name, setName] = useState('')
+    const [error, setError] = useState('')
+    const [loading, setLoading] = useState(false)
+
+    const withIdentity = () => {
+    const trimmed = Name.trim();
+    if (!trimmed) {
+      throw new Error("Please enter your  name");
+    }
+    setName(trimmed);
+    return {
+      Name: trimmed,
+    };
+    }
+    const handleCreateRoom = async () => {
+        setError('')
+        setLoading(true)
+        try {
+            const identity = withIdentity();
+            const data = await createRoom({ name: identity.Name });
+
+            console.log("Room created:", data.data.room.roomCode);
+
+            navigate(`/room-code/${data.data.room.roomCode}`, { state: { roomCode: data.data.room.roomCode, participantId: data.data.participantId } });    
+        } catch (error) {
+            setError( error.message || "An error occurred while creating the room.");
+        } finally {
+            setLoading(false);
+        }
+    }
+
+
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-4 py-10 text-slate-100">
       <div className="pointer-events-none absolute inset-0">
@@ -33,7 +72,9 @@ const RegisterPage = () => {
                 <circle cx="12" cy="7" r="4" />
               </svg>
               <input
-                id="displayName"
+                id="Name"
+                value={Name}
+                onChange={(e) => setName(e.target.value)}
                 type="text"
                 placeholder="e.g. dev_ninja_01"
                 className="h-11 w-full bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none"
@@ -45,11 +86,15 @@ const RegisterPage = () => {
 
           <button
             type="button"
+            onClick={handleCreateRoom}
+            disabled={loading}
             className="flex h-12 w-full items-center justify-center gap-2 rounded-md bg-blue-200/90 text-lg font-semibold text-slate-900 transition hover:bg-blue-200"
           >
             <span className="text-xl leading-none">+</span>
             <span>Create Room</span>
           </button>
+
+          {error && <p className="mt-2 text-center text-sm font-medium text-red-500">{error}</p>}
 
           <div className="flex items-center gap-4">
             <div className="h-px flex-1 bg-slate-800" />

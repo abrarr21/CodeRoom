@@ -32,7 +32,8 @@ export const createRoomService = async ({ name, title }) => {
 };
 
 export const joinRoomService = async ({ name, roomCode }) => {
-  const room = await Room.findOne({ roomCode });
+  const normalizedRoomCode = roomCode?.toUpperCase();
+  const room = await Room.findOne({ roomCode: normalizedRoomCode });
 
   if (!room) {
     throw new Error("Room not found.");
@@ -68,7 +69,7 @@ export const joinRoomService = async ({ name, roomCode }) => {
 
 
 export async function findRoomByCode(code) {
-  return Room.findOne({ code: code?.toUpperCase() });
+  return Room.findOne({ roomCode: code?.toUpperCase() });
 }
 
 export const closeRoomService = async ({ roomCode, sessionId }) => {
@@ -77,7 +78,7 @@ export const closeRoomService = async ({ roomCode, sessionId }) => {
     throw new Error("Room not found.");
   }
 
-  if (room.hostSessionId !== sessionId) {
+  if (room.hostParticipantId !== sessionId) {
     throw new Error("Only the host can close the room.");
   }
 
@@ -87,6 +88,7 @@ export const closeRoomService = async ({ roomCode, sessionId }) => {
   return room;
 }
 
+
 export const markParticipantOfflineService = async ({ roomCode, socketId }) => {
   const room = await findRoomByCode(roomCode);
   if (!room) {
@@ -95,18 +97,16 @@ export const markParticipantOfflineService = async ({ roomCode, socketId }) => {
 
   const participant = room.participants.find((p) => p.socketId === socketId);
   if (!participant) {
-    throw new Error("Participant not found.");
+    return room;
   }
 
-  if(participant) {
-    participant.online = false;
+  participant.online = false;
   participant.socketId = null;
   participant.lastSeenAt = new Date();
 
   await room.save();
-  }
 
-  return room
-}
+  return room;
+};
 
 

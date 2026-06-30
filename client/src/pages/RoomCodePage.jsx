@@ -1,8 +1,12 @@
-
+import { useNavigate, useParams} from "react-router-dom";
 import { useState } from "react";
 
 const RoomCodePage = () => {
-  const roomCode = "CR-7X9B";
+    
+    const navigate =useNavigate();
+    const { code } = useParams();
+
+  const roomCode = code;
   const [isCopied, setIsCopied] = useState(false);
 
   const handleCopyRoomCode = async () => {
@@ -90,6 +94,7 @@ const RoomCodePage = () => {
 
           <button
             type="button"
+            onClick={() => navigate(`/room/${roomCode}`)}
             className="flex h-10 w-full items-center justify-center gap-2 rounded-md bg-blue-200/90 text-sm font-semibold text-slate-900 transition hover:bg-blue-200"
           >
             <span>Continue to Room</span>
