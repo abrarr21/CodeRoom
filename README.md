@@ -2,29 +2,29 @@
 
 <div align="center">
 
-A real-time collaborative code editor where developers can create rooms, invite participants using a unique room code, and collaborate on code together in real time.
+A real-time collaborative code editor that enables multiple developers to write, edit, and collaborate on code simultaneously.
 
 Built with **React, Node.js, Express, MongoDB, Socket.IO, and Ace Editor**.
 
-![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react)
-![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=node.js)
-![Express](https://img.shields.io/badge/Express-000000?style=flat-square&logo=express)
-![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=flat-square&logo=mongodb)
-![Socket.IO](https://img.shields.io/badge/Socket.IO-black?style=flat-square&logo=socketdotio)
-![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-06B6D4?style=flat-square&logo=tailwindcss)
-![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite)
+<br/>
+
+![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react)
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=node.js)
+![Express](https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express)
+![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb)
+![Socket.IO](https://img.shields.io/badge/Socket.IO-010101?style=for-the-badge&logo=socketdotio)
+![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-06B6D4?style=for-the-badge&logo=tailwindcss)
+![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite)
 
 </div>
 
 ---
 
-## 📌 Overview
+## 📖 Overview
 
-CodeRoom is a collaborative coding platform that enables multiple users to work on the same code editor simultaneously.
+CodeRoom is a collaborative coding platform where multiple users can join the same room and edit code together in real time.
 
-Users can create a room, share the generated room code, and collaborate in real time with live synchronization, participant management, typing indicators, session restoration, and host controls.
-
-The project demonstrates real-world concepts like WebSockets, collaborative editing, MongoDB persistence, and scalable backend architecture.
+Users can create a room, share a unique room code, invite teammates, and collaborate seamlessly. The application provides live code synchronization, participant management, typing indicators, session restoration, and host controls for an efficient collaborative coding experience.
 
 ---
 
@@ -33,17 +33,18 @@ The project demonstrates real-world concepts like WebSockets, collaborative edit
 ### 🏠 Room Management
 
 - Create a room with a unique room code
-- Join existing rooms using the room code
+- Join an existing room using the room code
+- Rename room (Host only)
 - Close room (Host only)
-- Automatic session restore after refresh
+- Automatic session restoration after page refresh
 
-### 💻 Collaborative Editing
+### 💻 Collaborative Editor
 
-- Real-time code synchronization
-- Shared code editor
+- Real-time collaborative code editing
+- Live document synchronization
 - JavaScript syntax highlighting
 - Auto-completion with Ace Editor
-- Delta-based document updates
+- Delta-based synchronization
 - Line-level locking
 
 ### 👥 Participant Management
@@ -52,38 +53,38 @@ The project demonstrates real-world concepts like WebSockets, collaborative edit
 - Online / Offline status
 - Typing indicators
 - Host identification
-- Remove (Kick) participant (Host only)
+- Remove (Kick) participants (Host only)
 
 ### ⚡ Real-Time Communication
 
 - Socket.IO powered communication
-- Instant code synchronization
+- Instant document synchronization
 - Live participant updates
-- Automatic reconnect
+- Automatic reconnection
 - Connection status indicator
 
-### 💾 Data Persistence
+### 💾 Persistence
 
 - MongoDB document storage
 - Debounced auto-save
 - Automatic document recovery
-- Session persistence
+- Persistent session management
 
 ---
 
-## 🛠 Tech Stack
+## 🛠️ Tech Stack
 
 | Frontend | Backend | Database | Real-Time |
 |----------|----------|----------|-----------|
 | React | Node.js | MongoDB | Socket.IO |
-| Vite | Express | Mongoose | WebSockets |
+| Vite | Express.js | Mongoose | WebSockets |
 | Tailwind CSS | Zod | | |
 | Axios | JWT | | |
 | Ace Editor | NanoID | | |
 
 ---
 
-# 📁 Project Structure
+## 📂 Project Structure
 
 ```text
 CodeRoom
@@ -111,8 +112,8 @@ CodeRoom
 │   │   ├── socket
 │   │   ├── utils
 │   │   └── validators
-│   ├── server.js
-│   └── package.json
+│   ├── package.json
+│   └── server.js
 │
 ├── package.json
 └── README.md
@@ -120,36 +121,33 @@ CodeRoom
 
 ---
 
-# ⚙️ Getting Started
+## ⚙️ Getting Started
 
-## Clone the Repository
+### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/abrarr21/CodeRoom.git
-```
-
-```bash
 cd CodeRoom
 ```
 
 ---
 
-## Install Dependencies
+### 2. Install Dependencies
 
-### Install Root Dependencies
+Install root dependencies:
 
 ```bash
 npm install
 ```
 
-### Install Client Dependencies
+Install frontend dependencies:
 
 ```bash
 cd client
 npm install
 ```
 
-### Install Server Dependencies
+Install backend dependencies:
 
 ```bash
 cd ../server
@@ -158,9 +156,9 @@ npm install
 
 ---
 
-# 🔑 Environment Variables
+## 🔑 Environment Variables
 
-## Server (.env)
+### Server (`server/.env`)
 
 ```env
 PORT=5000
@@ -172,9 +170,7 @@ MONGODB_URI=mongodb://127.0.0.1:27017/coderoom
 JWT_SECRET=your_jwt_secret
 ```
 
----
-
-## Client (.env)
+### Client (`client/.env`)
 
 ```env
 VITE_API_URL=http://localhost:5000/api
@@ -184,95 +180,92 @@ VITE_SOCKET_URL=http://localhost:5000
 
 ---
 
-# ▶️ Run Locally
+## ▶️ Running the Application
 
-### Start Backend
+Start the backend server:
 
 ```bash
 cd server
 npm run dev
 ```
 
----
-
-### Start Frontend
+Start the frontend application:
 
 ```bash
 cd client
 npm run dev
 ```
 
----
+Open your browser and visit:
 
-Open your browser and visit
-
-```
+```text
 http://localhost:5173
 ```
 
 ---
 
-# 🌐 REST API
+## 🌐 REST API
 
 | Method | Endpoint | Description |
-|---------|----------|-------------|
-| POST | `/api/rooms` | Create a new room |
-| POST | `/api/rooms/join` | Join an existing room |
-| PATCH | `/api/rooms/:code` | Rename room (Host) |
-| PATCH | `/api/rooms/:code/close` | Close room (Host) |
+| :----- | :------- | :---------- |
+| `POST` | `/api/rooms` | Create a new room |
+| `POST` | `/api/rooms/join` | Join an existing room |
+| `PATCH` | `/api/rooms/:code` | Rename room (Host only) |
+| `PATCH` | `/api/rooms/:code/close` | Close room (Host only) |
 
 ---
 
-# 🔌 Socket Events
+## 🔌 Socket Events
 
-## Client → Server
+### Client → Server
 
 | Event | Description |
-|--------|-------------|
+| :---- | :---------- |
 | `room:join` | Join a room |
 | `room:reconnect` | Restore previous session |
-| `doc:delta` | Send code changes |
-| `doc:lock-request` | Request line lock |
-| `doc:lock-release` | Release line lock |
-| `presence:typing` | Notify typing status |
-| `participant:remove` | Remove participant (Host) |
-| `room:close` | Close room (Host) |
+| `doc:delta` | Send document changes |
+| `doc:lock-request` | Request a line lock |
+| `doc:lock-release` | Release a line lock |
+| `presence:typing` | Send typing status |
+| `room:rename` | Rename room (Host only) |
+| `participant:remove` | Remove a participant (Host only) |
+| `room:close` | Close room (Host only) |
 
----
-
-## Server → Client
+### Server → Client
 
 | Event | Description |
-|--------|-------------|
+| :---- | :---------- |
 | `presence:participants` | Update participant list |
-| `presence:typing` | Typing indicator |
-| `doc:delta-applied` | Sync document changes |
-| `doc:lock-granted` | Line lock granted |
-| `doc:lock-denied` | Line lock denied |
-| `doc:lock-released` | Line lock released |
-| `participant:removed` | Participant removed by host |
+| `presence:typing` | Receive typing status |
+| `doc:delta-applied` | Synchronize document changes |
+| `doc:lock-granted` | Lock granted |
+| `doc:lock-denied` | Lock denied |
+| `doc:lock-released` | Lock released |
+| `participant:removed` | Participant removed |
+| `room:renamed` | Room renamed |
 | `room:closed` | Room closed |
 | `room:error` | Error message |
 
 ---
 
-# 🔄 How It Works
+## 🔄 Workflow
 
-1. Create a room or join using a room code.
-2. Share the room code with your teammates.
-3. Participants connect through Socket.IO.
-4. Code changes are synchronized in real time.
-5. Host can manage participants and close the room.
-6. Documents are automatically saved to MongoDB.
+1. Create a new room or join an existing one using a room code.
+2. Share the room code with other participants.
+3. Connect to the room using Socket.IO.
+4. Collaborate on the same document in real time.
+5. View online participants and typing indicators.
+6. Host can rename the room, remove participants, or close the room.
+7. Changes are automatically synchronized and persisted to MongoDB.
 
 ---
 
-# 👨‍💻 Team
+## 👨‍💻 Team
 
 This project was collaboratively developed by:
 
 | Name | Role |
-|------|------|
+| :--- | :--- |
 | **Abrar Ansary** | Full Stack Developer |
 | **Siddhant Mul** | Full Stack Developer |
 | **Shiva Verma** | Full Stack Developer |
@@ -281,14 +274,14 @@ This project was collaboratively developed by:
 
 ## ⭐ Support
 
-If you like this project, consider giving it a **Star ⭐** on GitHub.
+If you found this project useful, consider giving it a ⭐ on GitHub.
 
-It helps us and motivates us to build more projects.
+It helps us improve the project and build more open-source applications.
 
 ---
 
 <div align="center">
 
-**Built with ❤️ by Abrar Ansary, Siddhant Mul & Shiva Verma**
+Made with ❤️ by **Abrar Ansary**, **Siddhant Mul** & **Shiva Verma**
 
 </div>
