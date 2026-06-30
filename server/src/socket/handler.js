@@ -4,7 +4,8 @@ import {
   joinRoomService,
   markParticipantOfflineService,
   renameRoomService,
-  removeParticipantService
+  removeParticipantService,
+  reconnectRoomService,
 } from '../services/room.service.js';
 import { registerDocumentEvents, getJoinPayload } from './document.events.js';
 
@@ -31,7 +32,7 @@ export function attachSocketHandlers(httpServer) {
     console.log('A user connected:', socket.id);
 
     socket.on('room:join', async (payload, callback) => {
-      const { roomCode, displayName } = payload;
+      const { roomCode, displayName, sessionId } = payload;
 
       const {
         room,
@@ -41,6 +42,7 @@ export function attachSocketHandlers(httpServer) {
       } = await joinRoomService({
         roomCode,
         displayName,
+        sessionId,
         socketId: socket.id,
       });
 

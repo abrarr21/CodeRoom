@@ -24,7 +24,7 @@ const CodeEditorPanel = ({ value, onChange, connected, roomCode }) => {
     <section className="flex min-h-[70vh] w-full flex-1 flex-col bg-[#050b18] md:w-3/4">
       <div className="flex items-center justify-between border-b border-slate-800 px-4 py-2.5">
         <div className="flex items-center gap-2 text-sm">
-          welcome to <span className="font-semibold text-blue-300">{roomName}</span>
+          welcome to <span className="font-semibold text-blue-300">{roomName || "Code Room"}</span>
           <span className="flex gap-1 items-center "> | Invite others <button  onClick={handleCopyRoomCode}>
             {
             isCopied ? (
