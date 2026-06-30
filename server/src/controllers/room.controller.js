@@ -8,7 +8,7 @@ export const createRoomController = async (req, res, next) => {
   try {
     const { name, title } = req.body;
 
-    const { room, participantId } = await createRoomService({
+    const { room, participantId, sessionId } = await createRoomService({
       name,
       title,
     });
@@ -19,6 +19,7 @@ export const createRoomController = async (req, res, next) => {
       data: {
         room,
         participantId,
+        sessionId,
       },
     });
   } catch (error) {

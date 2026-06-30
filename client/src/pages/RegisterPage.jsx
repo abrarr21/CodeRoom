@@ -1,61 +1,81 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createRoom, joinRoom, getApiErrorMessage } from "../api/http";
-
+import { createRoom, getApiErrorMessage } from "../api/http";
 
 const RegisterPage = () => {
   const navigate = useNavigate();
 
-    const [Name, setName] = useState('')
-    const [roomName, setRoomName] = useState('')
-    const [error, setError] = useState('')
-    const [loading, setLoading] = useState(false)
-
-    const [roomCode, setRoomCode] = useState('')
+  const [name, setName] = useState("");
+  const [roomName, setRoomName] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [roomCode, setRoomCode] = useState("");
 
   const withIdentity = () => {
-    const trimmed = Name.trim();
+    const trimmed = name.trim();
     if (!trimmed) {
-      throw new Error('Please enter your  name');
+      throw new Error("Please enter your name");
     }
+
     setName(trimmed);
-    return {
-      Name: trimmed,
-    };
+    return { name: trimmed };
   };
+
   const handleCreateRoom = async () => {
-    setError('');
+    setError("");
     setLoading(true);
+
     try {
       const identity = withIdentity();
-      const data = await createRoom({ name: identity.Name });
+      const data = await createRoom({
+        name: identity.name,
+        title: roomName.trim() || undefined,
+      });
 
-            // console.log("Room created:", data.data.room.roomCode);
+      const createdRoomCode = data.data.room.roomCode;
+      const createdSessionId = data.data.sessionId;
+      setRoomCode(createdRoomCode);
+      localStorage.setItem("coderoom:displayName", identity.name);
+      if (createdSessionId) {
+        localStorage.setItem(`coderoom:session:${createdRoomCode}`, createdSessionId);
+      }
 
-            setRoomCode(data.data.room.roomCode);
-
-            navigate(`/room-code/${data.data.room.roomCode}`, { state: { roomCode: data.data.room.roomCode, participantId: data.data.participantId } });    
-        } catch (error) {
-        setError(getApiErrorMessage(error, "An error occurred while creating the room."));
-        } finally {
-            setLoading(false);
-        }
+      navigate(`/room-code/${createdRoomCode}`, {
+        state: {
+          roomCode: createdRoomCode,
+          participantId: data.data.participantId,
+          sessionId: createdSessionId,
+          displayName: identity.name,
+        },
+      });
+    } catch (requestError) {
+      setError(getApiErrorMessage(requestError, "An error occurred while creating the room."));
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const handleJoinRoom = async () => {
-        setError('')
-        setLoading(true)
-        try {
-            const identity = withIdentity();
-            const code =roomCode.trim().toUpperCase();
-            await joinRoom({ name: identity.Name, roomCode: code });
-            navigate(`/room/${code}`, { state: { roomCode: code } });
-        } catch (error) {
-        setError(getApiErrorMessage(error, "An error occurred while joining the room."));
-      } finally {
-        setLoading(false);
-        }
+  const handleJoinRoom = async () => {
+    setError("");
+    setLoading(true);
+
+    try {
+      const identity = withIdentity();
+      const normalizedCode = roomCode.trim().toUpperCase();
+      localStorage.setItem("coderoom:displayName", identity.name);
+
+      navigate(`/room/${normalizedCode}`, {
+        state: {
+          roomCode: normalizedCode,
+          displayName: identity.name,
+        },
+      });
+    } catch (requestError) {
+      setError(getApiErrorMessage(requestError, "An error occurred while joining the room."));
+    } finally {
+      setLoading(false);
     }
+  };
 
 
   return (
@@ -98,7 +118,7 @@ const RegisterPage = () => {
               </svg>
               <input
                 id="Name"
-                value={Name}
+                value={name}
                 onChange={(e) => setName(e.target.value)}
                 type="text"
                 placeholder="e.g. dev_ninja_01"
@@ -143,7 +163,7 @@ const RegisterPage = () => {
             type="button"
             onClick={handleCreateRoom}
             disabled={loading}
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-md cursor-pointer bg-blue-200/90 text-lg font-semibold text-slate-900 transition hover:bg-blue-200 disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-md bg-blue-200/90 text-lg font-semibold text-slate-900 transition hover:bg-blue-200 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <span className="text-xl leading-none">+</span>
             <span>{loading ? "Please wait..." : "Create Room"}</span>
@@ -175,8 +195,8 @@ const RegisterPage = () => {
               </svg>
               <input
                 type="text"
-                value={inputRoomCode}
-                onChange={(e) => setInputRoomCode(e.target.value.toUpperCase())}
+                value={roomCode}
+                onChange={(e) => setRoomCode(e.target.value)}
                 placeholder="Enter Room Code"
                 className="h-11 w-full bg-transparent text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none"
               />
@@ -185,7 +205,7 @@ const RegisterPage = () => {
               type="button"
               onClick={handleJoinRoom}
               disabled={loading}
-              className="h-11 min-w-16 rounded-md bg-slate-700 px-4 text-sm font-semibold text-slate-100 transition hover:bg-slate-600 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer "
+              className="h-11 min-w-16 rounded-md bg-slate-700 px-4 text-sm font-semibold text-slate-100 transition hover:bg-slate-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? "..." : "Join"}
             </button>
