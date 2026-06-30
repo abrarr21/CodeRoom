@@ -10,17 +10,17 @@ export const createRoomService = async ({name,title}) => {
   } while (await Room.exists({ roomCode }));
 
   const participantId = randomUUID();
-  const sessionId = randomUUID();
+  const newSessionId = randomUUID();
 
   const room = await Room.create({
     roomCode,
     title: title?.trim() || 'Untitled Document',
     hostParticipantId: participantId,
-    hostSessionId: sessionId,
+    hostSessionId: newSessionId,
     participants: [
       {
         participantId,
-        sessionId,
+        sessionId: newSessionId,
         socketId: null,
         name,
         role: "host",
@@ -33,13 +33,14 @@ export const createRoomService = async ({name,title}) => {
   return {
     room,
     participantId,
-    sessionId,
+    sessionId: newSessionId,
   };
 };
 
 export const joinRoomService = async ({
   displayName,
   roomCode,
+  sessionId,
   socketId,
 }) => {
   const room = await Room.findOne({
@@ -52,6 +53,31 @@ export const joinRoomService = async ({
 
   if (room.isClosed) {
     return { error: "Room has been closed." };
+  }
+
+  // Reconnect existing participant by session id.
+  if (sessionId) {
+    const existingParticipant = room.participants.find(
+      (participant) => participant.sessionId === sessionId,
+    );
+
+    if (existingParticipant) {
+      existingParticipant.online = true;
+      existingParticipant.socketId = socketId;
+      existingParticipant.lastSeenAt = new Date();
+
+      if (displayName?.trim()) {
+        existingParticipant.name = displayName.trim();
+      }
+
+      await room.save();
+
+      return {
+        room,
+        participantId: existingParticipant.participantId,
+        sessionId: existingParticipant.sessionId,
+      };
+    }
   }
 
   // Display name must be unique among online participants
@@ -68,11 +94,11 @@ export const joinRoomService = async ({
   }
 
   const participantId = randomUUID();
-  const sessionId = randomUUID();
+  const newSessionId = randomUUID();
 
   room.participants.push({
     participantId,
-    sessionId,
+    sessionId: newSessionId,
     socketId,
     name: displayName,
     role: "participant",
@@ -85,8 +111,17 @@ export const joinRoomService = async ({
   return {
     room,
     participantId,
-    sessionId,
+    sessionId: newSessionId,
   };
+};
+
+export const reconnectRoomService = async ({ roomCode, sessionId, socketId }) => {
+  return joinRoomService({
+    roomCode,
+    displayName: "",
+    sessionId,
+    socketId,
+  });
 };
 
 export async function findRoomByCode(code) {

@@ -174,6 +174,11 @@ const RoomPage = () => {
     const sessionId = sessionIdRef.current;
     if (!sessionId) return;
 
+    setTypingBySessionId((prev) => ({
+      ...prev,
+      [sessionId]: true,
+    }));
+
     socket.emit("presence:typing", {
       roomCode,
       sessionId,
@@ -185,6 +190,11 @@ const RoomPage = () => {
     }
 
     typingTimeoutRef.current = setTimeout(() => {
+      setTypingBySessionId((prev) => ({
+        ...prev,
+        [sessionId]: false,
+      }));
+
       socket.emit("presence:typing", {
         roomCode,
         sessionId,
@@ -225,6 +235,10 @@ const RoomPage = () => {
   };
 
   const handleLeaveRoom = () => {
+    if (socket.connected) {
+      socket.disconnect();
+    }
+
     navigate("/");
   };
 
