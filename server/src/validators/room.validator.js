@@ -43,3 +43,20 @@ export const closeRoomSchema = z.object({
     .trim()
     .min(1, "sessionId is required."),
 });
+
+export const renameRoomSchema = z.object({
+  sessionId: z
+    .string({
+      required_error: "sessionId is required.",
+    })
+    .trim()
+    .min(1, "sessionId is required."),
+
+  title: z
+    .string({
+      required_error: "Room title is required.",
+    })
+    .trim()
+    .min(1, "Room title cannot be empty.")
+    .max(100, "Room title must not exceed 100 characters."),
+});

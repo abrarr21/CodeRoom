@@ -124,11 +124,10 @@ export const markParticipantOfflineService = async ({ roomCode, socketId }) => {
   return room;
 };
 
-export const reconnectRoomService = async ({
+export const renameRoomService = async ({
   roomCode,
-  participantId,
   sessionId,
-  socketId,
+  title,
 }) => {
   const room = await findRoomByCode(roomCode);
 
@@ -140,24 +139,60 @@ export const reconnectRoomService = async ({
     return { error: "Room has been closed." };
   }
 
+  if (room.hostSessionId !== sessionId) {
+    return { error: "Only the host can rename the room." };
+  }
+
+  room.title = title.trim();
+
+  await room.save();
+
+  return { room };
+};
+
+export const removeParticipantService = async ({
+  roomCode,
+  sessionId,
+  participantId,
+}) => {
+  const room = await findRoomByCode(roomCode);
+
+  if (!room) {
+    return { error: "Room not found." };
+  }
+
+  if (room.isClosed) {
+    return { error: "Room has been closed." };
+  }
+
+  // Verify host
+  if (room.hostSessionId !== sessionId) {
+    return { error: "Only the host can remove participants." };
+  }
+
+  // Find participant
   const participant = room.participants.find(
-    (p) =>
-      p.participantId === participantId &&
-      p.sessionId === sessionId
+    (p) => p.participantId === participantId
   );
 
   if (!participant) {
-    return { error: "Session expired. Please join again." };
+    return { error: "Participant not found." };
   }
 
-  participant.socketId = socketId;
-  participant.online = true;
-  participant.lastSeenAt = new Date();
+  // Host cannot remove themselves
+  if (participant.role === "host") {
+    return { error: "Host cannot remove themselves." };
+  }
+
+  // Remove participant
+  room.participants = room.participants.filter(
+    (p) => p.participantId !== participantId
+  );
 
   await room.save();
 
   return {
     room,
-    participant,
+    removedParticipant: participant,
   };
 };

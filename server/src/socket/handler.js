@@ -3,7 +3,8 @@ import {
   closeRoomService,
   joinRoomService,
   markParticipantOfflineService,
-  reconnectRoomService
+  renameRoomService,
+  removeParticipantService
 } from '../services/room.service.js';
 import { registerDocumentEvents, getJoinPayload } from './document.events.js';
 
@@ -134,6 +135,69 @@ export function attachSocketHandlers(httpServer) {
       socket.to(roomCode).emit('presence:typing', { sessionId, isTyping });
     });
 
+    socket.on("room:rename", async ({ roomCode, sessionId, title }) => {
+      const { room, error } = await renameRoomService({
+        roomCode,
+        sessionId,
+        title,
+      });
+    
+      if (error) {
+        socket.emit("room:error", {
+          message: error,
+        });
+        return;
+      }
+    
+      io.to(room.roomCode).emit("room:renamed", {
+        roomCode: room.roomCode,
+        title: room.title,
+      });
+    });
+
+    socket.on(
+      "participant:remove",
+      async ({ roomCode, sessionId, participantId }) => {
+        const { room, removedParticipant, error } =
+          await removeParticipantService({
+            roomCode,
+            sessionId,
+            participantId,
+          });
+    
+        if (error) {
+          socket.emit("room:error", {
+            message: error,
+          });
+          return;
+        }
+    
+        // Notify removed participant
+        if (removedParticipant.socketId) {
+          io.to(removedParticipant.socketId).emit("participant:removed", {
+            roomCode,
+            participantId: removedParticipant.participantId,
+          });
+    
+          // Disconnect the participant
+          const removedSocket = io.sockets.sockets.get(
+            removedParticipant.socketId
+          );
+    
+          if (removedSocket) {
+            removedSocket.leave(roomCode);
+            removedSocket.disconnect(true);
+          }
+        }
+    
+        // Notify everyone else
+        io.to(room.roomCode).emit("presence:participants", {
+          participants: serializeParticipants(room.participants),
+        });
+      }
+    );
+
+    // 4. Domain A: Close room
     socket.on('room:close', async ({ roomCode, sessionId }) => {
       const { room, error } = await closeRoomService({ roomCode, sessionId });
       if (error) {
