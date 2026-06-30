@@ -1,5 +1,6 @@
 import { Room } from '../models/room.model.js';
 import { applyInsert, applyDelete, validateOperation } from '../utils/delta.js';
+import { shiftLocks } from './lock.service.js';
 
 /**
  * In-memory cache of active room documents.
@@ -74,6 +75,7 @@ export const getSnapshot = async (roomCode) => {
     content: room.document.content,
     lastSequence: room.document.lastSequence,
     saveTimer: null,
+    history: [], // Bounded opertaion history for OT transformation
   });
 
   return {
@@ -92,7 +94,32 @@ export const applyDelta = async (roomCode, op, sequence) => {
 
   const entry = liveDocuments.get(roomCode);
 
-  const validation = validateOperation(entry.content, op);
+  // 1. Transform op against concurrent history edits
+  let transformedLine = op.line;
+  const history = entry.history || [];
+
+  if (history.length > 0 && sequence < history[0].sequence) {
+    return {
+      success: false,
+      error: 'Sequence too old. Please reload to resync.',
+    };
+  }
+
+  for (const hist of history) {
+    if (hist.sequence >= sequence) {
+      // If a concurrent edit inserted newlines above or at our line, shift our line down
+      if (hist.op.type === 'insert' && hist.op.line <= transformedLine) {
+        const newlines = (hist.op.text.match(/\n/g) || []).length;
+        if (newlines > 0) {
+          transformedLine += newlines;
+        }
+      }
+    }
+  }
+
+  const transformedOp = { ...op, line: transformedLine };
+
+  const validation = validateOperation(entry.content, transformedOp);
   if (!validation.valid) {
     return {
       success: false,
@@ -102,12 +129,31 @@ export const applyDelta = async (roomCode, op, sequence) => {
 
   // Apply the requested edit.
   const updatedContent =
-    op.type === 'insert'
-      ? applyInsert(entry.content, op.line, op.offset, op.text)
-      : applyDelete(entry.content, op.line, op.offset, op.length);
+    transformedOp.type === 'insert'
+      ? applyInsert(entry.content, transformedOp.line, transformedOp.offset, transformedOp.text)
+      : applyDelete(entry.content, transformedOp.line, transformedOp.offset, transformedOp.length);
 
+  // Count newline inserted/deleted to shift locks
+  let deltaLines = 0;
+  if (transformedOp.type === 'insert') {
+    deltaLines = (transformedOp.text.match(/\n/g) || []).length;
+  }
+
+  if (deltaLines !== 0) {
+    shiftLocks(roomCode, transformedOp.line, deltaLines);
+  }
+
+  const nextSequence = entry.lastSequence + 1;
   entry.content = updatedContent;
-  entry.lastSequence = sequence;
+  entry.lastSequence = nextSequence;
+
+  // Append transformed opertaion to history and enforce limits
+  if (!entry.history) entry.history = [];
+  entry.history.push({ sequence: nextSequence, op: transformedOp });
+
+  if (entry.history.length > 100) {
+    entry.history.shift();
+  }
 
   // Saving is deferred to reduce database writes during rapid edits.
   scheduleSave(roomCode);
@@ -115,6 +161,8 @@ export const applyDelta = async (roomCode, op, sequence) => {
   return {
     success: true,
     content: updatedContent,
+    sequence: nextSequence,
+    op: transformedOp,
   };
 };
 

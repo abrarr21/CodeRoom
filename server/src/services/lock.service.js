@@ -115,3 +115,38 @@ export function getActiveLocks(roomCode) {
 
   return active;
 }
+/**
+ * Shifts line lock indices when lines are inserted or deleted.
+ */
+export const shiftLocks = (roomCode, startLine, deltaLines) => {
+  if (deltaLines === 0) return;
+  const locks = getRoomLockMap(roomCode);
+  const newLocks = new Map();
+
+  for (const [lineKey, entry] of locks.entries()) {
+    const lineNum = Number(lineKey);
+    if (lineNum > startLine) {
+      newLocks.set(lineNum + deltaLines, entry);
+    } else if (lineNum === startLine) {
+      if (deltaLines > 0) {
+        // Keep the lock on the original line and extend it to the new line
+        newLocks.set(lineNum, entry);
+        for (let i = 1; i <= deltaLines; i++) {
+          newLocks.set(lineNum + i, {
+            ...entry,
+            expiresAt: Date.now() + LOCK_TTL_MS,
+          });
+        }
+      } else {
+        newLocks.set(lineNum, entry);
+      }
+    } else {
+      newLocks.set(lineNum, entry);
+    }
+  }
+
+  locks.clear();
+  for (const [line, entry] of newLocks.entries()) {
+    locks.set(line, entry);
+  }
+};
