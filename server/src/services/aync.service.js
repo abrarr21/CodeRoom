@@ -9,13 +9,13 @@ export async function applyDeltaWithTransform({
   baseVersion,
   authorSessionId,
 }) {
-  const room = await Room.findOne({ code: roomCode });
-  if (!room || room.status === "closed") {
+  const room = await Room.findOne({ roomCode: roomCode?.toUpperCase() });
+  if (!room || room.isClosed) {
     return { error: "Room not found or closed" };
   }
 
   const participantExists = room.participants.some(
-    (p) => p.sessionId === authorSessionId,
+    (p) => p.participantId === authorSessionId,
   );
   if (!participantExists) {
     return { error: "Participant not in room" };

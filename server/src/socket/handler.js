@@ -5,11 +5,9 @@ import { applyDeltaWithTransform } from "../services/aync.service.js";
 
 function serializeParticipants(participants) {
   return participants.map((p) => ({
-    sessionId: p.sessionId,
+    participantId: p.participantId,
     name: p.name,
-    isHost: p.isHost,
-    online: p.online,
-    lastSeenAt: p.lastSeenAt,
+    isHost: p.role === "host",
   }));
 }
 
@@ -21,38 +19,36 @@ export function attachSocketHandlers(httpServer) {
 
      socket.on("room:join", async (payload) => {
       const { roomCode, displayName, sessionId } = payload;
-      const { room, error } = await joinRoomService({
-        roomCode,
-        displayName,
-        sessionId,
-        socketId: socket.id,
-      });
+      try {
+        const { room, participantId } = await joinRoomService({
+          roomCode,
+          name: displayName,
+        });
 
-      if (error) {
-        socket.emit("room:error", { message: error });
+        socket.data.roomCode = room.roomCode;
+        socket.data.sessionId = participantId;
+        socket.join(room.roomCode);
+
+        socket.emit("room:snapshot", {
+          roomCode: room.roomCode,
+          roomName: room.title,
+          document: room.document,
+          participants: serializeParticipants(room.participants),
+          isHost: room.hostParticipantId === participantId,
+        });
+
+        io.to(room.roomCode).emit("presence:participants", {
+          participants: serializeParticipants(room.participants),
+        });
+      } catch (error) {
+        socket.emit("room:error", { message: error.message || "Unable to join room." });
         return;
       }
-
-      socket.data.roomCode = room.code;
-      socket.data.sessionId = sessionId;
-      socket.join(room.code);
-
-      socket.emit("room:snapshot", {
-        roomCode: room.code,
-        roomName: room.name,
-        document: room.document,
-        participants: serializeParticipants(room.participants),
-        isHost: room.hostSessionId === sessionId,
-      });
-
-      io.to(room.code).emit("presence:participants", {
-        participants: serializeParticipants(room.participants),
-      });
     });
 
     socket.on("editor:delta", async (payload) => {
       const { roomCode, delta, baseVersion, sessionId } = payload;
-      const result = await applyDeltaWithTransformansform({
+      const result = await applyDeltaWithTransform({
         roomCode,
         incomingDelta: delta,
         baseVersion,
@@ -76,13 +72,14 @@ export function attachSocketHandlers(httpServer) {
     });
 
     socket.on("room:close", async ({ roomCode, sessionId }) => {
-      const { room, error } = await closeRoomService({ roomCode, sessionId });
-      if (error) {
+      try {
+        const room = await closeRoomService({ roomCode, sessionId });
+
+        io.to(room.roomCode).emit("room:closed", { roomCode: room.roomCode });
+      } catch (error) {
         socket.emit("room:error", { message: error });
         return;
       }
-
-      io.to(room.code).emit("room:closed", { roomCode: room.code });
     });
 
     socket.on("disconnect", async () => {
@@ -91,7 +88,7 @@ export function attachSocketHandlers(httpServer) {
       if (roomCode) {
         const room = await markParticipantOfflineService({ roomCode, socketId: socket.id });
         if (room) {
-          io.to(room.code).emit("presence:participants", {
+          io.to(room.roomCode).emit("presence:participants", {
             participants: serializeParticipants(room.participants),
           });
         }

@@ -34,3 +34,12 @@ export const joinRoomSchema = z.object({
     .length(6, "Invalid room code.")
     .transform((code) => code.toUpperCase()),
 });
+
+export const closeRoomSchema = z.object({
+  sessionId: z
+    .string({
+      required_error: "sessionId is required.",
+    })
+    .trim()
+    .min(1, "sessionId is required."),
+});
