@@ -78,6 +78,8 @@ const RoomPage = () => {
       setParticipants(nextParticipants || []);
     };
 
+
+
     const handleTyping = ({ sessionId, isTyping }) => {
       if (!sessionId) return;
       setTypingBySessionId((prev) => ({
@@ -120,6 +122,7 @@ const RoomPage = () => {
     const persistedSession =
       location.state?.sessionId ||
       localStorage.getItem(`${SESSION_STORAGE_PREFIX}${roomCode}`);
+
 
     socket.emit(
       "room:join",
@@ -221,6 +224,10 @@ const RoomPage = () => {
     emitTyping();
   };
 
+  const handleLeaveRoom = () => {
+    navigate("/");
+  };
+
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
       <div className="flex min-h-screen flex-col md:flex-row">
@@ -228,6 +235,7 @@ const RoomPage = () => {
           participants={participants}
           typingBySessionId={typingBySessionId}
           currentSessionId={currentSessionId}
+          onLeaveRoom={handleLeaveRoom}
         />
 
         <CodeEditorPanel

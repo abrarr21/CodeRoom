@@ -40,12 +40,15 @@ const RegisterPage = () => {
         localStorage.setItem(`coderoom:session:${createdRoomCode}`, createdSessionId);
       }
 
+      localStorage.setItem(`coderoom:roomName:${createdRoomCode}`, data.data.room.title || "");
+
       navigate(`/room-code/${createdRoomCode}`, {
         state: {
           roomCode: createdRoomCode,
           participantId: data.data.participantId,
           sessionId: createdSessionId,
           displayName: identity.name,
+          roomName: roomName.trim() || "",
         },
       });
     } catch (requestError) {
@@ -63,11 +66,13 @@ const RegisterPage = () => {
       const identity = withIdentity();
       const normalizedCode = roomCode.trim().toUpperCase();
       localStorage.setItem("coderoom:displayName", identity.name);
+      localStorage.setItem(`coderoom:roomName:${normalizedCode}`, roomName.trim() || "");
 
       navigate(`/room/${normalizedCode}`, {
         state: {
           roomCode: normalizedCode,
           displayName: identity.name,
+          roomName: roomName.trim() || "",
         },
       });
     } catch (requestError) {

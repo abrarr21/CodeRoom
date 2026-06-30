@@ -9,6 +9,8 @@ const RoomCodePage = () => {
   const roomCode = code;
   const [isCopied, setIsCopied] = useState(false);
 
+  const roomName = window.history.state?.usr?.roomName || "";
+
   const handleCopyRoomCode = async () => {
     try {
       await navigator.clipboard.writeText(roomCode);
@@ -94,7 +96,7 @@ const RoomCodePage = () => {
 
           <button
             type="button"
-            onClick={() => navigate(`/room/${roomCode}`)}
+            onClick={() => navigate(`/room/${roomCode}`, { state: { roomName } })}
             className="flex h-10 w-full items-center justify-center gap-2 rounded-md bg-blue-200/90 text-sm font-semibold text-slate-900 transition hover:bg-blue-200"
           >
             <span>Continue to Room</span>
