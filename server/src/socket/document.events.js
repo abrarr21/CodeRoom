@@ -16,14 +16,23 @@ export const registerDocumentEvents = (io, socket) => {
   socket.on('doc:delta', async ({ roomCode, clientId, sequence, op }) => {
     if (!roomCode || !clientId || !op) return;
 
+    // Verify client owns the lock on the target line
+    const activeLocks = getActiveLocks(roomCode);
+    if (activeLocks[op.line] !== clientId) {
+      socket.emit('doc:sync-error', {
+        reason: `You must lock line ${op.line} before editing it.`,
+      });
+      return;
+    }
+
     const result = await applyDelta(roomCode, op, sequence);
 
     if (result.success) {
       // Send the updated document to everyone, including the sender.
       io.to(roomCode).emit('doc:delta-applied', {
         clientId,
-        sequence,
-        op,
+        sequence: result.sequence,
+        op: result.op,
         content: result.content,
       });
     } else {
