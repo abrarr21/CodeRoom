@@ -6,8 +6,18 @@ import "ace-builds/src-noconflict/ext-language_tools";
 
 const AceEditor = ReactAce?.default || ReactAce;
 
-const CodeEditorPanel = ({ value, onChange, connected, roomCode }) => {
+const CodeEditorPanel = ({
+  value,
+  onChange,
+  connected,
+  roomCode,
+  roomTitle,
+  isHost,
+  onRenameRoom,
+  onCursorLineChange,
+}) => {
   const [isCopied, setIsCopied] = useState(false);
+  const [titleInput, setTitleInput] = useState("");
 
   const handleCopyRoomCode = async () => {
     try {
@@ -19,13 +29,34 @@ const CodeEditorPanel = ({ value, onChange, connected, roomCode }) => {
     }
   };
 
-  const roomName = localStorage.getItem(`coderoom:roomName:${roomCode}`) || "";
   return (
     <section className="flex min-h-[70vh] w-full flex-1 flex-col bg-[#050b18] md:w-3/4">
       <div className="flex items-center justify-between border-b border-slate-800 px-4 py-2.5">
         <div className="flex items-center gap-2 text-sm">
-          welcome to <span className="font-semibold text-blue-300">{roomName || "Code Room"}</span>
-          <span className="flex gap-1 items-center "> | Invite others <button  onClick={handleCopyRoomCode}>
+          welcome to
+          {isHost ? (
+            <div className="flex items-center gap-2">
+              <input
+                value={titleInput || roomTitle || ""}
+                onChange={(event) => setTitleInput(event.target.value)}
+                className="h-7 rounded-md border border-slate-700 bg-slate-900/70 px-2 text-sm text-blue-300 focus:outline-none"
+                placeholder="Room title"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  onRenameRoom(titleInput || roomTitle || "");
+                  setTitleInput("");
+                }}
+                className="rounded-md border border-blue-500/40 bg-blue-500/10 px-2 py-1 text-xs font-semibold text-blue-300 transition hover:bg-blue-500/20"
+              >
+                Save
+              </button>
+            </div>
+          ) : (
+            <span className="font-semibold text-blue-300">{roomTitle || "Code Room"}</span>
+          )}
+          <span className="flex gap-1 items-center "> | Invite others <button className="cursor-pointer" title="Copy room code"  onClick={handleCopyRoomCode}>
             {
             isCopied ? (
                 <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#00ffff"><path d="M382-240 154-468l57-57 171 171 367-367 57 57-424 424Z"/></svg>
@@ -62,6 +93,12 @@ const CodeEditorPanel = ({ value, onChange, connected, roomCode }) => {
             useWorker: false,
           }}
           editorProps={{ $blockScrolling: true }}
+          onLoad={(editor) => {
+            editor.selection.on("changeCursor", () => {
+              const position = editor.getCursorPosition();
+              onCursorLineChange(position.row);
+            });
+          }}
         />
       </div>
     </section>
