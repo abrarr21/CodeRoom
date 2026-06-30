@@ -7,7 +7,15 @@ const participantSchema = new mongoose.Schema(
       required: true,
       immutable: true,
     },
-
+    sessionId: {
+      type: String,
+      required: true,
+      index: true,
+    },
+    socketId: {
+      type: String,
+      default: null,
+    },
     name: {
       type: String,
       required: true,
@@ -15,35 +23,23 @@ const participantSchema = new mongoose.Schema(
       minlength: 2,
       maxlength: 30,
     },
-
     role: {
       type: String,
       enum: ['host', 'participant'],
       default: 'participant',
     },
+    online: {
+      type: Boolean,
+      default: true,
+    },
+    lastSeenAt: {
+      type: Date,
+      default: Date.now,
+    },
   },
   {
     _id: false,
   }
-);
-
-const HistorySchema = new mongoose.Schema(
-  {
-    version: { type: Number, required: true },
-    authorSessionId: { type: String, required: true },
-    op: {
-      type: {
-        type: String,
-        enum: ['insert', 'delete'],
-        required: true,
-      },
-      index: { type: Number, required: true },
-      text: { type: String },
-      length: { type: Number },
-    },
-    createdAt: { type: Date, default: Date.now },
-  },
-  { _id: false }
 );
 
 const roomSchema = new mongoose.Schema(
@@ -70,6 +66,11 @@ const roomSchema = new mongoose.Schema(
       index: true,
     },
 
+    hostSessionId: {
+      type: String,
+      required: true,
+    },
+
     participants: {
       type: [participantSchema],
       default: [],
@@ -85,13 +86,7 @@ const roomSchema = new mongoose.Schema(
         type: String,
         default: '',
       },
-
-      version: {
-        type: Number,
-        default: 0,
-      },
-
-      lastSequece: {
+      lastSequence: {
         type: Number,
         default: 0,
       },
@@ -99,11 +94,6 @@ const roomSchema = new mongoose.Schema(
         type: Date,
         default: Date.now,
       },
-    },
-
-    history: {
-      type: [HistorySchema],
-      default: [],
     },
   },
   {

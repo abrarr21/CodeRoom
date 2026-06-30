@@ -1,5 +1,5 @@
 import { Room } from '../models/room.model.js';
-import { applyInsert, applyDelete, validateOp } from '../utils/delta.js';
+import { applyInsert, applyDelete, validateOperation } from '../utils/delta.js';
 
 /**
  * In-memory cache of active room documents.
@@ -72,13 +72,13 @@ export const getSnapshot = async (roomCode) => {
 
   liveDocuments.set(roomCode, {
     content: room.document.content,
-    lastSequence: room.document.lastSequece,
+    lastSequence: room.document.lastSequence,
     saveTimer: null,
   });
 
   return {
     content: room.document.content,
-    lastSequence: room.document.lastSequece,
+    lastSequence: room.document.lastSequence,
   };
 };
 
@@ -92,7 +92,7 @@ export const applyDelta = async (roomCode, op, sequence) => {
 
   const entry = liveDocuments.get(roomCode);
 
-  const validation = validateOp(entry.content, op);
+  const validation = validateOperation(entry.content, op);
   if (!validation.valid) {
     return {
       success: false,
