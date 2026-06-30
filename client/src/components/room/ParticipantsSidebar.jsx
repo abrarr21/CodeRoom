@@ -50,9 +50,9 @@ const ParticipantItem = ({ participant, index, isCurrentUser, isTyping }) => {
   );
 };
 
-const ParticipantsSidebar = ({ participants, typingBySessionId, currentSessionId }) => {
+const ParticipantsSidebar = ({ participants, typingBySessionId, currentSessionId, onLeaveRoom }) => {
   return (
-    <aside className="h-full min-h-[70vh] w-full border-b border-slate-800 bg-slate-950/80 md:w-1/4 md:border-b-0 md:border-r">
+    <aside className="flex h-full min-h-[100vh] w-full flex-col border-b border-slate-800 bg-slate-950/80 md:w-1/4 md:border-b-0 md:border-r">
       <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
         <h2 className="text-xs font-semibold tracking-[0.18em] text-slate-300">PARTICIPANTS</h2>
         <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-xs font-bold text-blue-300">
@@ -60,7 +60,7 @@ const ParticipantsSidebar = ({ participants, typingBySessionId, currentSessionId
         </span>
       </div>
 
-      <ul className="space-y-2 p-3">
+      <ul className="flex-1 space-y-2 overflow-y-auto p-3">
         {participants.map((participant, index) => (
           <ParticipantItem
             key={participant.participantId || participant.sessionId || `${participant.name}-${index}`}
@@ -71,6 +71,16 @@ const ParticipantsSidebar = ({ participants, typingBySessionId, currentSessionId
           />
         ))}
       </ul>
+
+      <div className="border-t border-slate-800 p-3 mt-auto">
+        <button
+          type="button"
+          onClick={onLeaveRoom}
+          className="flex h-10 w-full items-center justify-center rounded-md border border-rose-500/40 bg-rose-500/10 text-sm font-semibold text-rose-300 transition hover:bg-rose-500/20"
+        >
+          Leave Room
+        </button>
+      </div>
     </aside>
   );
 };
