@@ -27,6 +27,25 @@ const participantSchema = new mongoose.Schema(
   },
 );
 
+const HistorySchema = new mongoose.Schema(
+  {
+    version: { type: Number, required: true },
+    authorSessionId: { type: String, required: true },
+    op: {
+      type: {
+        type: String,
+        enum: ["insert", "delete"],
+        required: true,
+      },
+      index: { type: Number, required: true },
+      text: { type: String },
+      length: { type: Number },
+    },
+    createdAt: { type: Date, default: Date.now },
+  },
+  { _id: false },
+);
+
 const roomSchema = new mongoose.Schema(
   {
     roomCode: {
@@ -59,6 +78,16 @@ const roomSchema = new mongoose.Schema(
     isClosed: {
       type: Boolean,
       default: false,
+    },
+
+    document: {
+      content: { type: String, default: "" },
+      version: { type: Number, default: 0 },
+    },
+
+    history: {
+      type: [HistorySchema],
+      default: [],
     },
   },
   {

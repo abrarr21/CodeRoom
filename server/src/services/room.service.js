@@ -65,3 +65,48 @@ export const joinRoomService = async ({ name, roomCode }) => {
     participantId,
   };
 };
+
+
+export async function findRoomByCode(code) {
+  return Room.findOne({ code: code?.toUpperCase() });
+}
+
+export const closeRoomService = async ({ roomCode, sessionId }) => {
+  const room = await findRoomByCode(roomCode);
+  if (!room) {
+    throw new Error("Room not found.");
+  }
+
+  if (room.hostSessionId !== sessionId) {
+    throw new Error("Only the host can close the room.");
+  }
+
+  room.isClosed = true;
+  await room.save();
+
+  return room;
+}
+
+export const markParticipantOfflineService = async ({ roomCode, socketId }) => {
+  const room = await findRoomByCode(roomCode);
+  if (!room) {
+    throw new Error("Room not found.");
+  }
+
+  const participant = room.participants.find((p) => p.socketId === socketId);
+  if (!participant) {
+    throw new Error("Participant not found.");
+  }
+
+  if(participant) {
+    participant.online = false;
+  participant.socketId = null;
+  participant.lastSeenAt = new Date();
+
+  await room.save();
+  }
+
+  return room
+}
+
+
