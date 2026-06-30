@@ -7,7 +7,7 @@ export const createRoomService = async ({ name, title }) => {
 
   // Generate a unique room code
   do {
-    roomCode = generateRoomCode();
+    roomCode = await generateRoomCode();
   } while (await Room.exists({ roomCode }));
 
   const participantId = randomUUID();

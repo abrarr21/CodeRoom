@@ -77,7 +77,7 @@ export function attachSocketHandlers(httpServer) {
 
         io.to(room.roomCode).emit("room:closed", { roomCode: room.roomCode });
       } catch (error) {
-        socket.emit("room:error", { message: error });
+        socket.emit("room:error", { message: error.message || "Unable to close room." });
         return;
       }
     });

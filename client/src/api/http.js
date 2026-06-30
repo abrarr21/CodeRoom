@@ -7,6 +7,15 @@ export const http = axios.create({
   timeout: 8000,
 });
 
+export function getApiErrorMessage(error, fallback = "Something went wrong. Please try again.") {
+  return (
+    error?.response?.data?.error ||
+    error?.response?.data?.message ||
+    error?.message ||
+    fallback
+  );
+}
+
 export async function createRoom(payload) {
   const { data } = await http.post("/rooms", payload);
   return data;

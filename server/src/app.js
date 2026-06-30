@@ -13,7 +13,16 @@ export function createApp() {
 
   app.use((err, _req, res, _next) => {
     console.error(err);
-    res.status(500).json({ error: "Internal server error" });
+    const isDuplicateKey = err?.code === 11000;
+    const status = isDuplicateKey ? 409 : err.status || err.statusCode || 500;
+    const message = isDuplicateKey
+      ? "Room code already exists. Please try again."
+      : err.message || "Internal server error";
+
+    res.status(status).json({
+      success: false,
+      error: message,
+    });
   });
 
   return app;
